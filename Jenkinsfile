@@ -1,31 +1,48 @@
-node {
-    def app
+pipeline {
+    agent any
 
-    stage('Clone repository') {
-        // Clone the repository to the Jenkins workspace
-        checkout scm
+    environment {
+        DOCKER_HUB_CREDENTIALS = credentials('shubham-docker')
+        DOCKER_IMAGE = 'codes3shubh/nodejs-app'
     }
 
-    stage('Build image') {
-        // Build the Docker image
-        app = docker.build("devopstest")
-    }
+    stages {
+        stage('Clone repository') {
+            steps {
+                // Pull code from GitHub
+                git branch: 'master', url: 'https://github.com/codesShubh/dev-ops-use-case.git'
+            }
+        }
 
-    stage('Test image') {
-        def workspaceUnixPath = "${env.WORKSPACE}".replaceAll('C:', '/c').replace('\\', '/')
+        stage('Build Docker image') {
+            steps {
+                script {
+                    // Build the Docker image
+                    docker.build("${DOCKER_IMAGE}:${env.BUILD_NUMBER}")
+                }
+            }
+        }
 
-        // Run tests inside the Docker container
-        app.inside("-w ${workspaceUnixPath}") {
-            sh 'pwd' // Verify the current working directory
-            sh 'echo "Tests passed"'
+        stage('Push Docker image') {
+            steps {
+                script {
+                    // Push the Docker image to Docker Hub
+                    docker.withRegistry('https://registry.hub.docker.com', 'shubham-docker') {
+                        docker.image("${DOCKER_IMAGE}:${env.BUILD_NUMBER}").push()
+                        docker.image("${DOCKER_IMAGE}:${env.BUILD_NUMBER}").push('latest')
+                    }
+                }
+            }
         }
     }
 
-    stage('Push image') {
-        // Push the image to Docker Hub
-        docker.withRegistry('https://registry.hub.docker.com', 'shubham-docker') {
-            app.push("${env.BUILD_NUMBER}")
-            app.push("latest")
+    post {
+        always {
+            // Clean up local images
+            script {
+                docker.image("${DOCKER_IMAGE}:${env.BUILD_NUMBER}").remove()
+                docker.image("${DOCKER_IMAGE}:latest").remove()
+            }
         }
     }
 }

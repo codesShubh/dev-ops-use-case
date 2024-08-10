@@ -1,25 +1,19 @@
+# Use a specific Node.js version
 FROM node:18
 
-# Create the directory if it doesn't exist
-RUN mkdir -p /workspace
+# Create app directory
+WORKDIR /usr/src/app
 
-# Set the working directory inside the container
-WORKDIR /workspace
-
-# Copy package.json and package-lock.json to the working directory
+# Install app dependencies
 COPY package*.json ./
 
-# Install the application's dependencies
 RUN npm install
 
-# Copy the rest of the application code
+# Bundle app source
 COPY . .
 
-# Set a health check for the application
-HEALTHCHECK --interval=5s --timeout=5s CMD curl -f http://127.0.0.1:8000 || exit 1
-
-# Expose port 8000 for the application
+# Expose the port the app runs on
 EXPOSE 8000
 
-# Start the application
+# Run the app
 CMD ["npm", "start"]
