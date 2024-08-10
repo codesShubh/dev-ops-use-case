@@ -1,8 +1,10 @@
-# Use a specific Node.js version
 FROM node:18
 
-# Set working directory inside the container
-WORKDIR /usr/src/app
+# Create the directory if it doesn't exist
+RUN mkdir -p /workspace
+
+# Set the working directory inside the container
+WORKDIR /workspace
 
 # Copy package.json and package-lock.json to the working directory
 COPY package*.json ./
