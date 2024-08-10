@@ -12,8 +12,10 @@ node {
     }
 
     stage('Test image') {
+        def workspaceUnixPath = "${env.WORKSPACE}".replaceAll('C:', '/c').replace('\\', '/')
+
         // Run tests inside the Docker container
-        app.inside("-w /usr/src/app") { // Update to the actual path you want
+        app.inside("-w ${workspaceUnixPath}") {
             sh 'pwd' // Verify the current working directory
             sh 'echo "Tests passed"'
         }
